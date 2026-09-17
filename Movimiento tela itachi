@@ -1,0 +1,568 @@
+--==================================================
+-- MOVIMIENTO TELA • ITACHI
+-- Panel + Perfil + Colores + Burbuja móvil
+-- Optimizado para bajo consumo
+--==================================================
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+
+--==================================================
+-- CONFIGURACIÓN
+--==================================================
+
+local ACTIVADO = false
+local BURBUJA_VISIBLE = true
+
+-- Solo afecta al movimiento lateral.
+-- NO modifica WalkSpeed.
+local VELOCIDAD_LATERAL = 21
+
+local COLORES = {
+	Azul = Color3.fromRGB(40, 130, 255),
+	Verde = Color3.fromRGB(45, 200, 100),
+	Amarillo = Color3.fromRGB(245, 190, 40),
+	Rosado = Color3.fromRGB(235, 80, 170),
+	Morado = Color3.fromRGB(145, 80, 235)
+}
+
+local COLOR_ACTUAL = COLORES.Azul
+
+--==================================================
+-- FUNCIONES
+--==================================================
+
+local function ObtenerPersonaje()
+	local Character = LocalPlayer.Character
+	if not Character then
+		return nil, nil, nil
+	end
+
+	local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+	local Root = Character:FindFirstChild("HumanoidRootPart")
+
+	return Character, Humanoid, Root
+end
+
+--==================================================
+-- GUI PRINCIPAL
+--==================================================
+
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "MovimientoTelaITACHI"
+Gui.ResetOnSpawn = false
+Gui.IgnoreGuiInset = false
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+Gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+--==================================================
+-- BURBUJA
+--==================================================
+
+local Burbuja = Instance.new("TextButton")
+Burbuja.Name = "BurbujaMovimiento"
+Burbuja.Size = UDim2.new(0, 190, 0, 42)
+
+-- ARRIBA Y CENTRADA
+Burbuja.AnchorPoint = Vector2.new(0.5, 0)
+Burbuja.Position = UDim2.new(0.5, 0, 0, 12)
+
+Burbuja.BackgroundColor3 = COLOR_ACTUAL
+Burbuja.BackgroundTransparency = 0.08
+Burbuja.BorderSizePixel = 0
+Burbuja.Text = "MOVIMIENTO TELA • ITACHI"
+Burbuja.TextColor3 = Color3.new(1, 1, 1)
+Burbuja.TextSize = 14
+Burbuja.Font = Enum.Font.GothamBold
+Burbuja.AutoButtonColor = false
+Burbuja.Parent = Gui
+
+local BurbujaCorner = Instance.new("UICorner")
+BurbujaCorner.CornerRadius = UDim.new(0, 12)
+BurbujaCorner.Parent = Burbuja
+
+local BurbujaStroke = Instance.new("UIStroke")
+BurbujaStroke.Color = Color3.new(1, 1, 1)
+BurbujaStroke.Transparency = 0.72
+BurbujaStroke.Thickness = 1
+BurbujaStroke.Parent = Burbuja
+
+--==================================================
+-- PANEL
+--==================================================
+
+local Panel = Instance.new("Frame")
+Panel.Name = "PanelPrincipal"
+Panel.Size = UDim2.new(0, 390, 0, 285)
+Panel.Position = UDim2.new(0.5, -195, 0.5, -142)
+Panel.BackgroundColor3 = Color3.fromRGB(18, 20, 27)
+Panel.BackgroundTransparency = 0.08
+Panel.BorderSizePixel = 0
+Panel.Visible = true
+Panel.Parent = Gui
+
+local PanelCorner = Instance.new("UICorner")
+PanelCorner.CornerRadius = UDim.new(0, 15)
+PanelCorner.Parent = Panel
+
+local PanelStroke = Instance.new("UIStroke")
+PanelStroke.Color = COLOR_ACTUAL
+PanelStroke.Transparency = 0.25
+PanelStroke.Thickness = 1.5
+PanelStroke.Parent = Panel
+
+--==================================================
+-- TÍTULO
+--==================================================
+
+local Titulo = Instance.new("TextLabel")
+Titulo.Size = UDim2.new(1, -100, 0, 42)
+Titulo.Position = UDim2.new(0, 15, 0, 8)
+Titulo.BackgroundTransparency = 1
+Titulo.Text = "MOVIMIENTO TELA • ITACHI"
+Titulo.TextColor3 = Color3.new(1, 1, 1)
+Titulo.TextSize = 17
+Titulo.Font = Enum.Font.GothamBold
+Titulo.TextXAlignment = Enum.TextXAlignment.Left
+Titulo.Parent = Panel
+
+--==================================================
+-- BOTÓN MOVER PANEL
+--==================================================
+
+local MoverPanel = Instance.new("TextButton")
+MoverPanel.Size = UDim2.new(0, 38, 0, 34)
+MoverPanel.Position = UDim2.new(1, -87, 0, 9)
+MoverPanel.BackgroundColor3 = COLOR_ACTUAL
+MoverPanel.BackgroundTransparency = 0.15
+MoverPanel.BorderSizePixel = 0
+MoverPanel.Text = "+"
+MoverPanel.TextColor3 = Color3.new(1, 1, 1)
+MoverPanel.TextSize = 21
+MoverPanel.Font = Enum.Font.GothamBold
+MoverPanel.AutoButtonColor = false
+MoverPanel.Parent = Panel
+
+local MoverCorner = Instance.new("UICorner")
+MoverCorner.CornerRadius = UDim.new(0, 9)
+MoverCorner.Parent = MoverPanel
+
+--==================================================
+-- CERRAR
+--==================================================
+
+local Cerrar = Instance.new("TextButton")
+Cerrar.Size = UDim2.new(0, 38, 0, 34)
+Cerrar.Position = UDim2.new(1, -45, 0, 9)
+Cerrar.BackgroundColor3 = Color3.fromRGB(45, 45, 55)
+Cerrar.BackgroundTransparency = 0.15
+Cerrar.BorderSizePixel = 0
+Cerrar.Text = "X"
+Cerrar.TextColor3 = Color3.new(1, 1, 1)
+Cerrar.TextSize = 15
+Cerrar.Font = Enum.Font.GothamBold
+Cerrar.AutoButtonColor = false
+Cerrar.Parent = Panel
+
+local CerrarCorner = Instance.new("UICorner")
+CerrarCorner.CornerRadius = UDim.new(0, 9)
+CerrarCorner.Parent = Cerrar
+
+--==================================================
+-- SECCIÓN MOVIMIENTO
+--==================================================
+
+local MovimientoTitulo = Instance.new("TextLabel")
+MovimientoTitulo.Size = UDim2.new(1, -30, 0, 28)
+MovimientoTitulo.Position = UDim2.new(0, 15, 0, 58)
+MovimientoTitulo.BackgroundTransparency = 1
+MovimientoTitulo.Text = "MOVIMIENTO TELA"
+MovimientoTitulo.TextColor3 = COLOR_ACTUAL
+MovimientoTitulo.TextSize = 14
+MovimientoTitulo.Font = Enum.Font.GothamBold
+MovimientoTitulo.TextXAlignment = Enum.TextXAlignment.Left
+MovimientoTitulo.Parent = Panel
+
+local Info = Instance.new("TextLabel")
+Info.Size = UDim2.new(1, -30, 0, 35)
+Info.Position = UDim2.new(0, 15, 0, 85)
+Info.BackgroundTransparency = 1
+Info.Text = "Movimiento manual con giro instantáneo"
+Info.TextColor3 = Color3.fromRGB(190, 193, 202)
+Info.TextSize = 12
+Info.Font = Enum.Font.Gotham
+Info.TextXAlignment = Enum.TextXAlignment.Left
+Info.Parent = Panel
+
+--==================================================
+-- ACTIVAR
+--==================================================
+
+local Activar = Instance.new("TextButton")
+Activar.Size = UDim2.new(0, 125, 0, 40)
+Activar.Position = UDim2.new(0, 15, 0, 125)
+Activar.BackgroundColor3 = COLOR_ACTUAL
+Activar.BorderSizePixel = 0
+Activar.Text = "ACTIVAR"
+Activar.TextColor3 = Color3.new(1, 1, 1)
+Activar.TextSize = 13
+Activar.Font = Enum.Font.GothamBold
+Activar.AutoButtonColor = false
+Activar.Parent = Panel
+
+local ActivarCorner = Instance.new("UICorner")
+ActivarCorner.CornerRadius = UDim.new(0, 10)
+ActivarCorner.Parent = Activar
+
+--==================================================
+-- PERFIL
+--==================================================
+
+local PerfilTitulo = Instance.new("TextLabel")
+PerfilTitulo.Size = UDim2.new(1, -30, 0, 25)
+PerfilTitulo.Position = UDim2.new(0, 15, 0, 177)
+PerfilTitulo.BackgroundTransparency = 1
+PerfilTitulo.Text = "PERFIL"
+PerfilTitulo.TextColor3 = COLOR_ACTUAL
+PerfilTitulo.TextSize = 14
+PerfilTitulo.Font = Enum.Font.GothamBold
+PerfilTitulo.TextXAlignment = Enum.TextXAlignment.Left
+PerfilTitulo.Parent = Panel
+
+local Avatar = Instance.new("ImageLabel")
+Avatar.Name = "AvatarRoblox"
+Avatar.Size = UDim2.new(0, 52, 0, 52)
+Avatar.Position = UDim2.new(0, 15, 0, 205)
+Avatar.BackgroundColor3 = Color3.fromRGB(35, 37, 46)
+Avatar.BorderSizePixel = 0
+Avatar.Parent = Panel
+
+local AvatarCorner = Instance.new("UICorner")
+AvatarCorner.CornerRadius = UDim.new(1, 0)
+AvatarCorner.Parent = Avatar
+
+local Nombre = Instance.new("TextLabel")
+Nombre.Size = UDim2.new(1, -85, 0, 52)
+Nombre.Position = UDim2.new(0, 78, 0, 205)
+Nombre.BackgroundTransparency = 1
+Nombre.Text = LocalPlayer.DisplayName .. "\n@" .. LocalPlayer.Name
+Nombre.TextColor3 = Color3.new(1, 1, 1)
+Nombre.TextSize = 13
+Nombre.Font = Enum.Font.GothamMedium
+Nombre.TextXAlignment = Enum.TextXAlignment.Left
+Nombre.TextYAlignment = Enum.TextYAlignment.Center
+Nombre.Parent = Panel
+
+--==================================================
+-- COLORES
+--==================================================
+
+local ColorTitulo = Instance.new("TextLabel")
+ColorTitulo.Size = UDim2.new(0, 110, 0, 25)
+ColorTitulo.Position = UDim2.new(1, -140, 0, 177)
+ColorTitulo.BackgroundTransparency = 1
+ColorTitulo.Text = "COLOR"
+ColorTitulo.TextColor3 = Color3.new(1, 1, 1)
+ColorTitulo.TextSize = 12
+ColorTitulo.Font = Enum.Font.GothamBold
+ColorTitulo.TextXAlignment = Enum.TextXAlignment.Left
+ColorTitulo.Parent = Panel
+
+local NombresColores = {
+	"Azul",
+	"Verde",
+	"Amarillo",
+	"Rosado",
+	"Morado"
+}
+
+local BotonesColor = {}
+
+for i, NombreColor in ipairs(NombresColores) do
+	local Boton = Instance.new("TextButton")
+	Boton.Name = "Color_" .. NombreColor
+	Boton.Size = UDim2.new(0, 23, 0, 23)
+
+	local x = 1
+	local y = 0
+
+	if i <= 3 then
+		x = -140 + ((i - 1) * 30)
+		y = 207
+	else
+		x = -110 + ((i - 4) * 30)
+		y = 235
+	end
+
+	Boton.Position = UDim2.new(1, x, 0, y)
+	Boton.BackgroundColor3 = COLORES[NombreColor]
+	Boton.BorderSizePixel = 0
+	Boton.Text = ""
+	Boton.AutoButtonColor = false
+	Boton.Parent = Panel
+
+	local Corner = Instance.new("UICorner")
+	Corner.CornerRadius = UDim.new(1, 0)
+	Corner.Parent = Boton
+
+	BotonesColor[NombreColor] = Boton
+end
+
+--==================================================
+-- PERFIL: AVATAR REAL DE ROBLOX
+--==================================================
+
+task.spawn(function()
+	local Success, Image = pcall(function()
+		local Content, Ready =
+			Players:GetUserThumbnailAsync(
+				LocalPlayer.UserId,
+				Enum.ThumbnailType.HeadShot,
+				Enum.ThumbnailSize.Size100x100
+			)
+
+		return Content
+	end)
+
+	if Success and Image then
+		Avatar.Image = Image
+	end
+end)
+
+--==================================================
+-- CAMBIAR COLOR
+--==================================================
+
+local function AplicarColor(NuevoColor)
+	COLOR_ACTUAL = NuevoColor
+
+	PanelStroke.Color = NuevoColor
+	Burbuja.BackgroundColor3 = NuevoColor
+	MoverPanel.BackgroundColor3 = NuevoColor
+	Activar.BackgroundColor3 = NuevoColor
+
+	MovimientoTitulo.TextColor3 = NuevoColor
+	PerfilTitulo.TextColor3 = NuevoColor
+end
+
+for NombreColor, Boton in pairs(BotonesColor) do
+	Boton.MouseButton1Click:Connect(function()
+		AplicarColor(COLORES[NombreColor])
+	end)
+end
+
+--==================================================
+-- ACTIVAR / DESACTIVAR
+--==================================================
+
+Activar.MouseButton1Click:Connect(function()
+	ACTIVADO = not ACTIVADO
+
+	if ACTIVADO then
+		Activar.Text = "ACTIVADO"
+	else
+		Activar.Text = "ACTIVAR"
+
+		-- Devolver autorrotación normal
+		local Character, Humanoid = ObtenerPersonaje()
+
+		if Humanoid then
+			Humanoid.AutoRotate = true
+		end
+	end
+end)
+
+--==================================================
+-- CERRAR / ABRIR PANEL
+--==================================================
+
+Cerrar.MouseButton1Click:Connect(function()
+	Panel.Visible = false
+	Burbuja.Visible = BURBUJA_VISIBLE
+end)
+
+Burbuja.MouseButton1Click:Connect(function()
+	Panel.Visible = true
+	Burbuja.Visible = false
+end)
+
+--==================================================
+-- DRAG GENÉRICO
+--==================================================
+
+local function HacerArrastrable(Objeto, MoverObjeto)
+
+	local Arrastrando = false
+	local Inicio
+	local PosicionInicial
+
+	MoverObjeto = MoverObjeto or Objeto
+
+	MoverObjeto.InputBegan:Connect(function(Input)
+		if Input.UserInputType == Enum.UserInputType.MouseButton1
+			or Input.UserInputType == Enum.UserInputType.Touch then
+
+			Arrastrando = true
+			Inicio = Input.Position
+			PosicionInicial = Objeto.Position
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(Input)
+
+		if not Arrastrando then
+			return
+		end
+
+		if Input.UserInputType ~= Enum.UserInputType.MouseMovement
+			and Input.UserInputType ~= Enum.UserInputType.Touch then
+			return
+		end
+
+		local Delta = Input.Position - Inicio
+
+		Objeto.Position = UDim2.new(
+			PosicionInicial.X.Scale,
+			PosicionInicial.X.Offset + Delta.X,
+			PosicionInicial.Y.Scale,
+			PosicionInicial.Y.Offset + Delta.Y
+		)
+	end)
+
+	UserInputService.InputEnded:Connect(function(Input)
+
+		if Input.UserInputType == Enum.UserInputType.MouseButton1
+			or Input.UserInputType == Enum.UserInputType.Touch then
+
+			Arrastrando = false
+		end
+	end)
+end
+
+-- Mover panel usando +
+HacerArrastrable(Panel, MoverPanel)
+
+-- Mover burbuja desde cualquier parte
+HacerArrastrable(Burbuja)
+
+--==================================================
+-- MOVIMIENTO
+--==================================================
+
+RunService.RenderStepped:Connect(function()
+
+	if not ACTIVADO then
+		return
+	end
+
+	local Character, Humanoid, Root = ObtenerPersonaje()
+
+	if not Humanoid or not Root or Humanoid.Health <= 0 then
+		return
+	end
+
+	local Camera = workspace.CurrentCamera
+
+	if not Camera then
+		return
+	end
+
+	local MoveDirection = Humanoid.MoveDirection
+
+	if MoveDirection.Magnitude < 0.05 then
+		return
+	end
+
+	local CameraRight = Camera.CFrame.RightVector
+	local CameraForward = Camera.CFrame.LookVector
+
+	local Right = Vector3.new(
+		CameraRight.X,
+		0,
+		CameraRight.Z
+	)
+
+	local Forward = Vector3.new(
+		CameraForward.X,
+		0,
+		CameraForward.Z
+	)
+
+	if Right.Magnitude < 0.01
+		or Forward.Magnitude < 0.01 then
+		return
+	end
+
+	Right = Right.Unit
+	Forward = Forward.Unit
+
+	local LateralAmount = MoveDirection:Dot(Right)
+	local ForwardAmount = MoveDirection:Dot(Forward)
+
+	-- SOLO modifica el movimiento lateral.
+	if math.abs(LateralAmount) > math.abs(ForwardAmount)
+		and math.abs(LateralAmount) > 0.35 then
+
+		local SideDirection =
+			Right * math.sign(LateralAmount)
+
+		local CurrentVelocity =
+			Root.AssemblyLinearVelocity
+
+		local NewLateralVelocity =
+			SideDirection
+			* VELOCIDAD_LATERAL
+			* math.abs(LateralAmount)
+
+		Root.AssemblyLinearVelocity = Vector3.new(
+			NewLateralVelocity.X,
+			CurrentVelocity.Y,
+			NewLateralVelocity.Z
+		)
+
+		-- Giro instantáneo
+		Root.CFrame = CFrame.lookAt(
+			Root.Position,
+			Root.Position + SideDirection
+		)
+
+	else
+
+		-- Movimiento normal hacia delante/atrás.
+		local Direction = Vector3.new(
+			MoveDirection.X,
+			0,
+			MoveDirection.Z
+		)
+
+		if Direction.Magnitude > 0.01 then
+
+			Direction = Direction.Unit
+
+			Root.CFrame = CFrame.lookAt(
+				Root.Position,
+				Root.Position + Direction
+			)
+
+		end
+	end
+end)
+
+--==================================================
+-- RESPAWN
+--==================================================
+
+LocalPlayer.CharacterAdded:Connect(function(Character)
+
+	task.wait(0.3)
+
+	local Humanoid =
+		Character:FindFirstChildOfClass("Humanoid")
+
+	if Humanoid then
+		Humanoid.AutoRotate = true
+	end
+end)
